@@ -14,7 +14,7 @@ export const profile = {
   email: "bavisettikalyan109@gmail.com",
   github: "https://github.com/kalyan1303",
   linkedIn: "https://www.linkedin.com/in/bavisetti-kalyan-5165aa246/",
-  resumePath: "/assets/Kalyan_Updated_CV.pdf",
+  resumePath: "/assets/Venkata_Kalyan_Bavisetti_Resume.pdf",
   portraitPath: "/assets/portrait.webp",
 } as const;
 
