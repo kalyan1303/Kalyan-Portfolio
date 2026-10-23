@@ -179,6 +179,16 @@ const speechButton = document.getElementById("speak-button");
 const speechStatus = document.getElementById("speech-status");
 const wave = document.querySelector(".live-wave");
 let activeUtterance = null;
+const MALE_VOICE_NAMES = /\b(male|man|david|mark|guy|george|james|daniel|alex|fred|tom|aaron|arthur|oliver|rishi|ravi|prabhat|christopher|eric|roger|steffan|ryan|brian|andrew|thomas|gordon|lee|reed|rocko|grandpa|eddy)\b/i;
+const FEMALE_VOICE_NAMES = /\b(female|woman|zira|susan|samantha|victoria|karen|moira|tessa|fiona|veena|heera|aria|jenny|emma|ava|allison|kate|serena|libby|sonia|neerja|hazel|catherine|linda|joanna|salli|kimberly|ivy|kendra|amy|nicole|olivia|grandma|flo|shelley|sandy)\b/i;
+function pickMaleVoice() {
+  const english = (window.speechSynthesis.getVoices?.() || []).filter((voice) => /^en(-|_)/i.test(voice.lang));
+  return english.find((voice) => /google uk english male/i.test(voice.name))
+    || english.find((voice) => MALE_VOICE_NAMES.test(voice.name) && !FEMALE_VOICE_NAMES.test(voice.name))
+    || english.find((voice) => !FEMALE_VOICE_NAMES.test(voice.name) && !/google us english/i.test(voice.name))
+    || null;
+}
+if ("speechSynthesis" in window) { window.speechSynthesis.getVoices?.(); window.speechSynthesis.addEventListener?.("voiceschanged", () => window.speechSynthesis.getVoices()); }
 speechButton.addEventListener("click", () => {
   if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
     speechStatus.textContent = "Speech is not available in this browser — read my introduction below.";
@@ -193,10 +203,10 @@ speechButton.addEventListener("click", () => {
   }
   const message = "Hi, I’m Kalyan, a fullstack developer with over four years of experience. I build enterprise applications, APIs, and data-driven systems, including solutions for South Coast AQMD. My work spans .NET, C sharp, web interfaces, data systems, and browser automation. I enjoy turning complex workflows into reliable, easy-to-use software. Thanks for visiting my portfolio.";
   activeUtterance = new SpeechSynthesisUtterance(message);
-  activeUtterance.rate = 0.94; activeUtterance.pitch = 1.03;
-  const voices = window.speechSynthesis.getVoices();
-  const englishVoice = voices.find((voice) => /^en(-|_)/i.test(voice.lang));
-  if (englishVoice) activeUtterance.voice = englishVoice;
+  activeUtterance.rate = 0.94; activeUtterance.pitch = 0.85;
+  const maleVoice = pickMaleVoice();
+  if (maleVoice) { activeUtterance.voice = maleVoice; activeUtterance.lang = maleVoice.lang; }
+  else activeUtterance.lang = "en-US";
   activeUtterance.onstart = () => { speechButton.innerHTML = '<span aria-hidden="true">■</span> Stop story'; speechStatus.textContent = "Kalyan is speaking…"; wave.classList.add("is-speaking"); };
   const finish = () => { speechButton.innerHTML = '<span aria-hidden="true">◖</span> Tell my story'; speechStatus.textContent = "Tap to hear a short introduction"; wave.classList.remove("is-speaking"); activeUtterance = null; };
   activeUtterance.onend = finish; activeUtterance.onerror = finish;

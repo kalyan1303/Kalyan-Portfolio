@@ -14,6 +14,19 @@ function supportsWebGL2(): boolean {
   }
 }
 
+const MALE_VOICE_NAMES = /\b(male|man|david|mark|guy|george|james|daniel|alex|fred|tom|aaron|arthur|oliver|rishi|ravi|prabhat|christopher|eric|roger|steffan|ryan|brian|andrew|thomas|gordon|lee|reed|rocko|grandpa|eddy)\b/i;
+const FEMALE_VOICE_NAMES = /\b(female|woman|zira|susan|samantha|victoria|karen|moira|tessa|fiona|veena|heera|aria|jenny|emma|ava|allison|kate|serena|libby|sonia|neerja|hazel|catherine|linda|joanna|salli|kimberly|ivy|kendra|amy|nicole|olivia|grandma|flo|shelley|sandy)\b/i;
+
+function pickMaleVoice(): SpeechSynthesisVoice | null {
+  const english = (window.speechSynthesis.getVoices?.() ?? []).filter((voice) => /^en(-|_)/i.test(voice.lang));
+  return (
+    english.find((voice) => /google uk english male/i.test(voice.name)) ??
+    english.find((voice) => MALE_VOICE_NAMES.test(voice.name) && !FEMALE_VOICE_NAMES.test(voice.name)) ??
+    english.find((voice) => !FEMALE_VOICE_NAMES.test(voice.name) && !/google us english/i.test(voice.name)) ??
+    null
+  );
+}
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
@@ -26,7 +39,10 @@ export function Hero() {
   const [speechStatus, setSpeechStatus] = useState("Avatar ready");
   const fallback = <StaticScene reducedMotion={reducedMotion} spinToken={spinToken} />;
 
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+  useEffect(() => {
+    window.speechSynthesis?.getVoices?.();
+    return () => window.speechSynthesis?.cancel();
+  }, []);
 
   function toggleSpeech() {
     if (!("speechSynthesis" in window)) {
@@ -44,6 +60,12 @@ export function Hero() {
     const speech = new SpeechSynthesisUtterance(profile.avatarSpeech);
     speech.lang = "en-US";
     speech.rate = 0.96;
+    speech.pitch = 0.85;
+    const maleVoice = pickMaleVoice();
+    if (maleVoice) {
+      speech.voice = maleVoice;
+      speech.lang = maleVoice.lang;
+    }
     setSpeaking(true);
     setSpeechStatus("Starting Kalyan's introduction");
     speech.onstart = () => {
